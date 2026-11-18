@@ -1,0 +1,83 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>UNO Online</title>
+<style>
+:root{--R:#d72600;--Y:#ecd407;--G:#379711;--B:#0956bf;--X:#111}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font:600 15px/1.3 "Trebuchet MS",system-ui,sans-serif;color:#fff;background:radial-gradient(ellipse at 50% 35%,#13804f,#07402a 75%);padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+h1{font:italic 900 44px Georgia,serif;margin:18px 0 8px;text-align:center;text-shadow:3px 3px 0 #000}h1 span{color:var(--Y)}
+.box{max-width:340px;margin:12px auto;display:grid;gap:10px}
+input,select,button{font:inherit;padding:12px;border-radius:12px;border:3px solid #fff;background:#0b2f20;color:#fff}
+button{background:var(--R);font-weight:900;cursor:pointer}button:active{transform:scale(.97)}
+hr{width:100%;border:0;border-top:2px dashed #fff5}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.chip{background:#0007;border:2px solid #fff4;border-radius:12px;padding:6px 10px;text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px}.top button{padding:6px 12px;font-size:13px;background:#0008}
+.table{position:relative;width:100%;max-width:480px;height:min(94vw,440px);margin:4px auto;border-radius:50%/46%;background:radial-gradient(#0e6b43,#0a4f33);border:4px solid #0007;box-shadow:inset 0 0 40px #0006}
+.seat{position:absolute;transform:translate(-50%,-50%);width:72px;text-align:center;font-size:12px}
+.av{width:42px;height:42px;border-radius:50%;margin:0 auto 2px;display:grid;place-items:center;font:900 18px Georgia,serif;border:3px solid #fff;background:var(--a);position:relative}
+.seat.on .av{box-shadow:0 0 0 3px var(--Y),0 0 16px var(--Y)}.seat.away{opacity:.5}.seat.out{opacity:.3;filter:grayscale(1)}
+.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:1px 1px 2px #000}
+.ct{position:absolute;right:-9px;bottom:-5px;background:#000;border-radius:10px;padding:0 6px;font-size:11px;border:2px solid #fff}
+.av em{position:absolute;left:-12px;top:-9px;background:var(--Y);color:#000;border-radius:8px;padding:0 4px;font:900 10px sans-serif}
+.cen{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:12px;align-items:center}
+.cen .card{width:54px;height:80px}.cen>div{text-align:center}
+.dirm{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:170px;opacity:.08;pointer-events:none}
+.dot{width:20px;height:20px;border-radius:50%;border:3px solid #fff;margin:6px auto 0}
+.pend{font:900 30px Georgia,serif;color:var(--Y);text-shadow:2px 2px 0 #000}
+.st{text-align:center;font-size:18px;margin:6px}.lg{text-align:center;font-size:12px;opacity:.75;margin:2px}
+.act button{min-width:110px}
+.hand{display:flex;gap:6px;overflow-x:auto;padding:20px 6px 14px;margin-top:4px}
+.card{width:62px;height:92px;flex:none;border-radius:10px;border:3px solid #fff;position:relative;overflow:hidden;background:var(--c);box-shadow:0 3px 8px #0008;user-select:none;font-family:Georgia,serif}
+.card.R{--c:var(--R)}.card.Y{--c:var(--Y)}.card.G{--c:var(--G)}.card.B{--c:var(--B)}.card.W,.card.X{--c:#111}
+.card:before{content:"";position:absolute;inset:7% 11%;background:#fff;border-radius:50%;transform:rotate(32deg)}
+.card.W:before{background:conic-gradient(var(--R) 0 25%,var(--B) 0 50%,var(--G) 0 75%,var(--Y) 0)}.card.X:before{background:var(--R)}
+.card i{position:absolute;inset:0;display:grid;place-items:center;font:italic 900 30px Georgia,serif;color:var(--c);text-shadow:2px 2px 0 #000}
+.card.W i{color:#fff}.card.X i{color:var(--Y);font-size:22px}.card.l i{font-size:18px}
+.card b,.card u{position:absolute;font:900 11px Georgia,serif;color:#fff;text-decoration:none;text-shadow:1px 1px 0 #000}
+.card b{top:3px;left:5px}.card u{bottom:3px;right:5px;transform:rotate(180deg)}
+.card.ok{transform:translateY(-14px);cursor:pointer;box-shadow:0 6px 14px #000a}.card.no{filter:brightness(.55)}
+.ov{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:5}
+.ov div{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ov button{width:110px;height:80px}
+.off{position:fixed;top:0;left:0;right:0;background:var(--Y);color:#000;text-align:center;padding:6px;z-index:9}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#000d;padding:10px 16px;border-radius:12px;display:none;z-index:9}
+</style></head><body><div id="app"></div><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const D={'+2':2,'+4':4,'rev+4':4,'+6':6,'+10':10},SYM={skip:'⊘',rev:'⇄',skipall:'⊗',discard:'✖',roulette:'🎲',wild:'✱','rev+4':'⇄+4'};
+let S=null,me=JSON.parse(sessionStorage.uno||'null'),es,off=0;
+const inv=()=>(new URLSearchParams(location.search).get('room')||'').toUpperCase();
+const lab=v=>SYM[v]??v,card=(c,x='')=>`<div class="card ${c.c} ${lab(c.v).length>2?'l':''} ${x}" data-id="${c.id}"><b>${lab(c.v)}</b><i>${lab(c.v)}</i><u>${lab(c.v)}</u></div>`;
+const ok=c=>S.pend?D[c.v]>=D[S.top.v]:c.c=='W'||c.c==S.color||c.v==S.top.v;
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2200)}
+async function api(b){try{const r=await fetch('/act',{method:'POST',body:JSON.stringify({...me,...b})}),j=await r.json();if(j.err){toast(j.err);return null}return j}catch(e){toast('Connection problem');return null}}
+function connect(){es&&es.close();es=new EventSource(`/events?room=${me.room}&pid=${me.pid}`);es.onopen=()=>{off=0};es.onmessage=e=>{off=0;S=JSON.parse(e.data);render()};es.onerror=()=>{if(es.readyState==2){delete sessionStorage.uno;me=S=null;off=0;toast('That game is no longer available')}else off=1;render()}}
+async function go(b){if(!b.name.trim()){toast('Enter your name first');$('#nm').focus();return}const j=await api(b);if(j){me={room:j.room,pid:j.pid};sessionStorage.uno=JSON.stringify(me);localStorage.nm=b.name.trim();connect()}}
+async function leave(){if(!confirm('Leave this game?'))return;await api({t:'leave'});es&&es.close();delete sessionStorage.uno;me=S=null;history.replaceState(null,'',location.pathname);render()}
+const bar=()=>`<div class="top"><span>Room <b>${S.code}</b> · ${S.mode=='nomercy'?'No Mercy':'Classic'}${S.started?' · deck '+S.deckN:''}</span><button id="lv">Leave</button></div>`;
+const lobby=()=>`<h1>UNO <span>online</span></h1><div class="box"><input id="nm" maxlength="14" placeholder="Enter your name" value="${esc(localStorage.nm||'')}">${inv()?`<p style="text-align:center;margin:0">You're invited to room <b>${esc(inv())}</b></p><button id="jn">Join room</button><button id="nw" style="background:#0007">Create my own room instead</button>`:`<select id="md"><option value="classic">Classic UNO</option><option value="nomercy">UNO No Mercy</option></select><button id="cr">Create room</button><hr><input id="cd" maxlength="4" placeholder="Room code"><button id="jn">Join with code</button>`}</div>`;
+const wait=()=>`${bar()}<h1>Room <span>${S.code}</span></h1><div class="box"><button id="cp">Copy invite link</button><p style="text-align:center;margin:0">${S.players.length}/10 players · friends can join any time</p>${S.players.map(p=>`<div class="chip">${esc(p.name)}${p.id==S.host?' 👑':''}${p.id==S.me?' (you)':''}${p.on?'':' · offline'}</div>`).join('')}${S.host==S.me?'<button id="start">Start game</button>':'<p style="text-align:center">Waiting for the host to start</p>'}</div>`;
+function game(){
+  const n=S.players.length,mi=S.players.findIndex(p=>p.id==S.me),cur=S.players[S.turn],my=cur.id==S.me&&!S.winner,mine=S.players[mi],win=S.winner&&S.players.find(p=>p.id==S.winner);
+  const seats=S.players.map((p,i)=>{const a=Math.PI/2+((i-mi+n)%n)*2*Math.PI/n,h=[...p.name].reduce((s,c)=>s+c.charCodeAt(0),0)*37%360;
+    return `<div class="seat ${i==S.turn&&!S.winner?'on':''} ${p.out?'out':''} ${p.on?'':'away'}" style="left:${50+40*Math.cos(a)}%;top:${50+38*Math.sin(a)}%"><div class="av" style="--a:hsl(${h},55%,38%)">${esc([...p.name][0].toUpperCase())}<span class="ct">${p.out?'✖':p.n}</span>${p.n==1&&!p.out?'<em>UNO!</em>':''}</div><div class="nm">${p.id==S.me?'You':esc(p.name)}</div>${p.on?'':'<div class="nm">offline</div>'}</div>`}).join('');
+  return `${bar()}<div class="table"><div class="dirm">${S.dir>0?'↻':'↺'}</div>${seats}<div class="cen"><div id="dr">${card({c:'X',v:'UNO',id:0})}</div><div>${card(S.top)}<div class="dot" style="background:var(--${S.color})"></div></div>${S.pend?`<div class="pend">+${S.pend}</div>`:''}</div></div>
+<p class="st">${win?'🏆 '+esc(win.name)+' wins!':my?(S.pend?'Stack a draw card or take +'+S.pend:'Your turn'):esc(cur.name)+"'s turn"}</p><p class="lg">${S.log.map(esc).join(' | ')}</p>
+<div class="row act">${my?`<button id="draw">${S.pend?'Take '+S.pend:'Draw'}</button>${S.drew?'<button id="pass">Pass</button>':''}`:''}${S.winner&&S.host==S.me?'<button id="start">Play again</button>':''}</div>${mine.out?'<p class="st">You were knocked out.</p>':''}<div class="hand" id="hand">${S.hand.map(c=>card(c,my?(ok(c)?'ok':'no'):'')).join('')}</div>`}
+function picker(id){const o=document.createElement('div');o.className='ov';o.innerHTML='<div>'+['R','Y','G','B'].map(c=>`<button data-c="${c}" style="background:var(--${c});color:#000">${{R:'Red',Y:'Yellow',G:'Green',B:'Blue'}[c]}</button>`).join('')+'</div>';o.onclick=e=>{const c=e.target.dataset.c;o.remove();if(c)api({t:'play',card:id,color:c})};document.body.append(o)}
+function render(){
+  const sl=$('#hand')?.scrollLeft||0;
+  $('#app').innerHTML=(off?'<div class="off">Reconnecting…</div>':'')+(!S?lobby():!S.started?wait():game());
+  if($('#hand'))$('#hand').scrollLeft=sl;
+  const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
+  document.querySelectorAll('#hand .ok').forEach(el=>el.onclick=()=>{const c=S.hand.find(x=>x.id==el.dataset.id);c.c=='W'?picker(c.id):api({t:'play',card:c.id})});
+  on('#draw',()=>api({t:'draw'}));on('#dr',()=>api({t:'draw'}));on('#pass',()=>api({t:'pass'}));on('#start',()=>api({t:'start'}));on('#lv',leave);
+  on('#cr',()=>go({t:'create',name:$('#nm').value,mode:$('#md').value}));
+  on('#jn',()=>go({t:'join',name:$('#nm').value,room:inv()||$('#cd').value}));
+  on('#nw',()=>{location.href=location.pathname});
+  on('#cp',()=>navigator.clipboard.writeText(location.origin+'/?room='+S.code).then(()=>toast('Invite link copied')));
+}
+const ping=()=>{if(me)fetch('/act',{method:'POST',body:JSON.stringify({...me,t:'ping'})}).catch(()=>{})};setInterval(ping,5000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me){ping();if(!es||es.readyState!=1)connect()}});
+addEventListener('pagehide',()=>{if(me)navigator.sendBeacon('/act',JSON.stringify({...me,t:'bye'}))});
+me?connect():render();
+</script></body></html>
